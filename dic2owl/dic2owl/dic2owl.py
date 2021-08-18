@@ -8,10 +8,19 @@ from typing import Union
 import urllib.request
 
 from emmo import World
+
 import owlready2
 from owlready2 import locstr
 
 from CifFile import CifDic
+
+
+# Workaround for EMMO-Python
+# Make sure that we can load cif-ddl.ttl which doesn't import SKOS
+import emmo.ontology
+emmo.ontology.DEFAULT_LABEL_ANNOTATIONS = [
+    'http://www.w3.org/2000/01/rdf-schema#label',
+]
 
 
 def en(s):
@@ -37,15 +46,11 @@ class Generator:
     def __init__(self, dicfile, base_iri):
         self.dic = CifDic(dicfile, do_dREL=False)
 
-        print('*** ontology_dir:', ontology_dir())
-
         # Load cif-ddl ontology
         self.world = World()
         cif_ddl = ontology_dir() / 'cif-ddl.ttl'
-        print('*** cif_ddl:', cif_ddl)
-        self.ddl = self.world.get_ontology(str(cif_ddl))
-        #self.ddl = self.world.get_ontology(str(cif_ddl)).load()
-        #self.ddl.sync_python_names()
+        self.ddl = self.world.get_ontology(str(cif_ddl)).load()
+        self.ddl.sync_python_names()
 
         # Create new ontology
         self.onto = self.world.get_ontology(base_iri)
@@ -160,26 +165,26 @@ class Generator:
 #            else:
 #                print("** no packet:", realname)
 
-    def subarray(self, dimensions, datatype, container_name):
-        """Returns a reference to an array or matrix corresponding to:
-        - dimensions: list of dimension values
-        - typename: type of elements
-        - container_name: "Array" or "Matrix"
-        If it does not already exists, the subarray is created.  All
-        its spatial direct parts are also generated recursively.
-        """
-        if not dimensions or not dimensions[0]:
-            return datatype
-        name = "Shape" + "x".join(dimensions) + datatype.name + container_name
-        if name not in self.onto:
-            e = types.new_class(name, (self.onto[container_name],))
-            d = int(dimensions.pop(0))
-            e.is_a.append(
-                self.top.hasSpatialDirectPart.exactly(
-                    d, self.subarray(dimensions, datatype, container_name)
-                )
-            )
-        return self.onto[name]
+#    def subarray(self, dimensions, datatype, container_name):
+#        """Returns a reference to an array or matrix corresponding to:
+#        - dimensions: list of dimension values
+#        - typename: type of elements
+#        - container_name: "Array" or "Matrix"
+#        If it does not already exists, the subarray is created.  All
+#        its spatial direct parts are also generated recursively.
+#        """
+#        if not dimensions or not dimensions[0]:
+#            return datatype
+#        name = "Shape" + "x".join(dimensions) + datatype.name + container_name
+#        if name not in self.onto:
+#            e = types.new_class(name, (self.onto[container_name],))
+#            d = int(dimensions.pop(0))
+#            e.is_a.append(
+#                self.top.hasSpatialDirectPart.exactly(
+#                    d, self.subarray(dimensions, datatype, container_name)
+#                )
+#            )
+#        return self.onto[name]
 
 
 def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
