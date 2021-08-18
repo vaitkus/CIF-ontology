@@ -37,13 +37,15 @@ class Generator:
     """Class for generating CIF ontology from a CIF dictionary.
 
     Parameters:
-    dicfile : string
-        File name of CIF dictionary to generate an ontology for.
-    base_iri : string
-        Base IRI of the generated ontology.
+        dicfile : string
+            File name of CIF dictionary to generate an ontology for.
+        base_iri : string
+            Base IRI of the generated ontology.
     """
 
-    def __init__(self, dicfile, base_iri):
+    def __init__(self,
+                 dicfile: str,
+                 base_iri: str):
         self.dic = CifDic(dicfile, do_dREL=False)
 
         # Load cif-ddl ontology
@@ -60,12 +62,18 @@ class Generator:
 
     def generate(self):
         """Generate ontology for the CIF dictionary."""
+        self._add_dic_top()
+
         for item in self.dic:
-            if "_definition.scope" in item:
+            if "_definition.scope" in item and '_definition.id' in item:
                 self._add_category(item)
             else:
                 self._add_data_value(item)
         return self.onto
+
+    def _add_dic_top(self):
+        """Add the top class of the generated ontology."""
+        pass
 
     def _add_category(self, item):
         """Add category."""
@@ -73,7 +81,19 @@ class Generator:
             return
         self.categories.add(item)
 
-        #print('*** category', item)
+        print('*** category', item)
+        name = item['_definition.id']
+        parent_name = item['_name.category_id']
+        parent_item = self.dic[parent_name]
+        #if parent_item not in self.categories:
+        #    self._add_category(parent_item)
+        #
+        #with self.onto:
+        #
+        #    cat = types.new_class(name, (self.onto[parent_name], ))
+
+
+
 
 #        name = item["_definition.id"]
 #        descr = item.get("_description.text")
@@ -194,7 +214,7 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
 
     # Download the CIF dictionaries to current directory
     baseurl = "https://raw.githubusercontent.com/COMCIFS/cif_core/master/"
-    for dic in ("ddl.dic", "templ_attr.cif", "templ_enum.cif") + (dicfile,):
+    for dic in ("ddl.dic", "templ_attr.cif", "templ_enum.cif", dicfile):
         if not Path(dic).resolve().exists():
             print("downloading", dic)
             urllib.request.urlretrieve(baseurl + dic, dic)
