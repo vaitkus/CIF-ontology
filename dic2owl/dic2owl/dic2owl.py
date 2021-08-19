@@ -81,7 +81,7 @@ class Generator:
         self.onto = self.world.get_ontology(base_iri)
         self.onto.imported_ontologies.append(self.ddl)
 
-        self.categories = set()
+        self.items = set()
 
     def generate(self) -> Ontology:
         """Generate ontology for the CIF dictionary.
@@ -137,9 +137,9 @@ class Generator:
             item: Item to be added to the list of categories.
 
         """
-        if item in self.categories:
+        if item in self.items:
             return
-        self.categories.add(item)
+        self.items.add(item)
 
         if "_definition.id" not in item:
             self._add_top(item)
@@ -150,7 +150,7 @@ class Generator:
             print(f"*** {name} -> {parent_name}")
 
             parent_item = self.dic[parent_name]
-            if parent_item not in self.categories:
+            if parent_item not in self.items:
                 self._add_category(parent_item)
 
             with self.onto:
@@ -164,6 +164,24 @@ class Generator:
             item: Item to be added as a datum.
 
         """
+        if item in self.items:
+            return
+        self.items.add(item)
+
+        name = item["_definition.id"]
+        parents = []
+        
+        
+        parent_name = item["_name.category_id"]
+        print(f"*** {name} -> {parent_name}")
+        parent = self.dic[parent_name]
+        if "_definition.scope" and "_definition.id" in parent:
+            self._add_category(parent)
+        else:
+            self._add_data_value(parent)
+        parents.append(self.onto[parent_name])
+        with self.onto:
+            cls = types.new_class(name, parents)
 
         # realname = item["_definition.id"]
 
