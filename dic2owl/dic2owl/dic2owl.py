@@ -10,7 +10,7 @@ from pathlib import Path
 
 # import textwrap
 import types
-from typing import Union
+from typing import Union, Sequence
 import urllib.request
 
 # Remove the print statement concerning 'owlready2_optimized'
@@ -59,27 +59,37 @@ class Generator:
     """Class for generating CIF ontology from a CIF dictionary.
 
     Parameters:
-        dicfile (str): File name of CIF dictionary to generate an ontology for.
-        base_iri (str): Base IRI of the generated ontology.
-
+        dicfile: File name of CIF dictionary to generate an ontology for.
+        base_iri: Base IRI of the generated ontology.
+        comments: Sequence of comments to add to the ontology itself.
     """
+    # TODO:
+    # Should `comments` be replaced with a dict `annotations` for annotating the
+    # ontology itself?  If so, we should import Dublin Core.
 
     def __init__(
-        self,
-        dicfile: str,
-        base_iri: str,
+            self,
+            dicfile: str,
+            base_iri: str,
+            comments: Sequence[str] = (),
     ) -> None:
+        self.dicfile = dicfile
         self.dic = CifDic(dicfile, do_dREL=False)
+        self.comments = comments
 
-        # Load cif-ddl ontology
+        # Create new ontology
         self.world = World()
+        self.onto = self.world.get_ontology(base_iri)
+
+        # Load cif-ddl ontology and append it to imported ontologies
         cif_ddl = ONTOLOGY_DIR / "cif-ddl.ttl"
         self.ddl = self.world.get_ontology(str(cif_ddl)).load()
         self.ddl.sync_python_names()
-
-        # Create new ontology
-        self.onto = self.world.get_ontology(base_iri)
         self.onto.imported_ontologies.append(self.ddl)
+
+        # Load Dublin core for metadata and append it to imported ontologies
+        #dcterms = self.world.get_ontology('http://purl.org/dc/terms/').load()
+        #self.onto.imported_ontologies.append(dcterms)
 
         self.items = set()
 
@@ -95,6 +105,9 @@ class Generator:
                 self._add_category(item)
             else:
                 self._add_data_value(item)
+
+        self._add_metadata()
+        self.onto.sync_attributes()
         return self.onto
 
     def _add_annotations(self, cls, item) -> None:
@@ -171,11 +184,9 @@ class Generator:
         name = item["_definition.id"]
         parents = []
 
-
         parent_name1 = item["_name.category_id"]
         parent = self.dic[parent_name1]
         parent_name = parent['_definition.id']
-        print(f"*** {name} -> {parent_name}")
 
         if "_definition.scope" and "_definition.id" in parent:
             self._add_category(parent)
@@ -199,98 +210,17 @@ class Generator:
 
         self._add_annotations(cls, item)
 
+    def _add_metadata(self):
+        """Adds metadata to the generated ontology."""
+        # TODO:
+        # Is there a way to extract metadata from the dic object like
+        # _dictionary_audit.version?
+        #onto.set_version(version="XXX")
 
-
-
-#        name = realname.replace(".", "_")
-#        descr = item.get("_description.text")
-#        units = item.get("_units.code")
-#        aliases = item.get("_alias.definition_id")
-#        examples = item.get("_description_example.detail", [])
-#        examples.extend(item.get("_description_example.case", []))
-#        dimension = item.get("_type.dimension")
-#
-#        container_name = item.get("_type.container", "Single")
-#        datatype_name = item.get("_type.contents", "Text")
-#        category_name = item["_name.category_id"].upper()
-#        packet_name = "_%s_PACKET" % item["_name.category_id"]
-#
-#        container = self.onto[container_name]
-#        datatype = self.onto[datatype_name]
-#        category = self.onto[category_name]
-#
-#        with self.onto:
-#
-#            if container_name == "Single":
-#                e = types.new_class(name, (datatype,))
-#            elif container_name in ("Matrix", "Array"):
-#                dims = dimension.strip("[]")
-#                if dims:
-#                    subarr = self.subarray(dims.split(","), datatype, container_name)
-#                    e = types.new_class(name, (subarr,))
-#                else:
-#                    e = types.new_class(name, (datatype,))
-#            else:
-#                e = types.new_class(name, (container,))
-#                if container_name == "List":
-#                    e.is_a.append(self.top.hasSpatialDirectPart.some(datatype))
-#                else:
-#                    e.is_a.append(self.top.hasSpatialPart.some(datatype))
-#
-#            if category.disjoint_unions:
-#                category.disjoint_unions[0].append(e)
-#            else:
-#                category.disjoint_unions.append([e])
-#            e.prefLabel.append(en(realname.lstrip("_")))
-#            if name != realname:
-#                e.altLabel.append(en(name.lstrip("_")))
-#
-#            # Hmm, _name is already used internally by owlready2.Ontology
-#            # so `e._name.append(name)` won't work.
-#            # We have to add the tripple the hard way...
-#            o, d = owlready2.to_literal(realname)  # not localised
-#            self.onto._set_data_triple_spod(
-#                s=e.storid, p=self.onto.world._props["_name"].storid, o=o, d=d
-#            )
-#
-#            if aliases:
-#                e.altLabel.extend(en(a) for a in aliases)
-#            if descr:
-#                e.comment.append(en(textwrap.dedent(descr)))
-#            if examples:
-#                e.example.extend(en(textwrap.dedent(ex)) for ex in examples)
-#            if units:
-#                e._unit.append(units)  # not localised
-#            if dimension:
-#                e._dimension.append(dimension)  # not localised
-#            if datatype:
-#                e._datatype.append(datatype)  # not localised
-#            if packet_name in self.onto:
-#                packet = self.onto[packet_name]
-#                packet.is_a.append(self.top.hasSpatialDirectPart.max(1, e))
-#            else:
-#                print("** no packet:", realname)
-
-#    def subarray(self, dimensions, datatype, container_name):
-#        """Returns a reference to an array or matrix corresponding to:
-#        - dimensions: list of dimension values
-#        - typename: type of elements
-#        - container_name: "Array" or "Matrix"
-#        If it does not already exists, the subarray is created.  All
-#        its spatial direct parts are also generated recursively.
-#        """
-#        if not dimensions or not dimensions[0]:
-#            return datatype
-#        name = "Shape" + "x".join(dimensions) + datatype.name + container_name
-#        if name not in self.onto:
-#            e = types.new_class(name, (self.onto[container_name],))
-#            d = int(dimensions.pop(0))
-#            e.is_a.append(
-#                self.top.hasSpatialDirectPart.exactly(
-#                    d, self.subarray(dimensions, datatype, container_name)
-#                )
-#            )
-#        return self.onto[name]
+        for comment in self.comments:
+            self.onto.metadata.comment.append(comment)
+        self.onto.metadata.comment.append(
+            f'Generated with dic2owl from {self.dicfile}')
 
 
 def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
@@ -323,18 +253,6 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
 
     gen = Generator(dicfile=dicfile, base_iri=base_iri)
     onto = gen.generate()
-
-    # # Annotate ontology
-    # onto.sync_attributes()
-    # onto.set_version(version="0.0.1")
-    # onto.metadata.abstract = (
-    #     "CIF core ontology generated from the CIF core definitions at "
-    #     "https://raw.githubusercontent.com/COMCIFS/cif_core/master/"
-    # )
-
-    # if ttlfile is None:
-    #     ttlfile = Path(dicfile).name[: -len(Path(dicfile).suffix)] + ".ttl"
-
     onto.save(
         ttlfile if isinstance(ttlfile, str) else str(ttlfile.resolve()),
         overwrite=True,
@@ -351,5 +269,3 @@ if __name__ == "__main__":
     dic = self.dic
     ddl = self.ddl
     onto = self.onto
-    # sid = cd["space_group_symop.id"]
-    # s = cd["SPACE_GROUP_SYMOP"]
