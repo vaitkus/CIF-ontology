@@ -111,11 +111,11 @@ class Generator:
 
              # Add new annotation to generated ontology
              if annotation_name not in self.ddl:
-                 raise MissingAnnotationError(annotation_name) 
+                 raise MissingAnnotationError(annotation_name)
 
              # Assign annotation
              annot = getattr(cls, annotation_name)
-             annot.append(en(value))    
+             annot.append(en(value))
 
     def _add_top(self, item) -> None:
         """Add the top class of the generated ontology.
@@ -170,18 +170,22 @@ class Generator:
 
         name = item["_definition.id"]
         parents = []
-        
-        
-        parent_name = item["_name.category_id"]
+
+
+        parent_name1 = item["_name.category_id"]
+        parent = self.dic[parent_name1]
+        parent_name = parent['_definition.id']
         print(f"*** {name} -> {parent_name}")
-        parent = self.dic[parent_name]
+
+
+
         if "_definition.scope" and "_definition.id" in parent:
             self._add_category(parent)
         else:
             self._add_data_value(parent)
         parents.append(self.onto[parent_name])
         with self.onto:
-            cls = types.new_class(name, parents)
+            cls = types.new_class(name, tuple(parents))
 
         # realname = item["_definition.id"]
 
