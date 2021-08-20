@@ -177,17 +177,29 @@ class Generator:
         parent_name = parent['_definition.id']
         print(f"*** {name} -> {parent_name}")
 
-
-
         if "_definition.scope" and "_definition.id" in parent:
             self._add_category(parent)
         else:
             self._add_data_value(parent)
         parents.append(self.onto[parent_name])
+
+        for ddl_name, value in item.items():
+            if ddl_name.startswith('_type.'):
+                if ddl_name == '_type.dimension':
+                    # TODO - fix special case
+                    pass
+                elif value == 'Implied':
+                    # TODO - fix special case
+                    pass
+                else:
+                    parents.append(self.ddl[value])
+
         with self.onto:
             cls = types.new_class(name, tuple(parents))
 
-        # realname = item["_definition.id"]
+        self._add_annotations(cls, item)
+
+
 
 
 #        name = realname.replace(".", "_")
