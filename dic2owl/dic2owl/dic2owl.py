@@ -13,6 +13,8 @@ import types
 from typing import Union, Sequence
 import urllib.request
 
+from CifFile import CifDic
+
 # Remove the print statement concerning 'owlready2_optimized'
 # when importing owlready2 (which is imported also in emmo).
 with open(DEVNULL, "w") as handle:
@@ -20,22 +22,20 @@ with open(DEVNULL, "w") as handle:
         from emmo import World
         from emmo.ontology import Ontology
 
-        import owlready2
         from owlready2 import locstr
 
-from CifFile import CifDic
 
-
-# Workaround for EMMO-Python
-# Make sure that we can load cif-ddl.ttl which doesn't import SKOS
-import emmo.ontology
-
+# Workaround for flaw in EMMO-Python
+# To be removed when EMMO-Python doesn't requires ontologies to import SKOS
+import emmo.ontology  # noqa: E402
 emmo.ontology.DEFAULT_LABEL_ANNOTATIONS = [
     "http://www.w3.org/2000/01/rdf-schema#label",
 ]
 
-"""The absolute, normalized path to the `ontology` directory in this repository"""
-ONTOLOGY_DIR = Path(__file__).resolve().parent.parent.parent.joinpath("ontology")
+"""The absolute, normalized path to the `ontology` directory in this
+repository"""
+ONTOLOGY_DIR = Path(__file__).resolve().parent.parent.parent.joinpath(
+    "ontology")
 
 
 def en(string: str) -> locstr:
@@ -49,6 +49,7 @@ def en(string: str) -> locstr:
 
     """
     return locstr(string, lang="en")
+
 
 class MissingAnnotationError(Exception):
     """Raised when using a cif-dictionary annotation not defined in ddl
@@ -64,8 +65,8 @@ class Generator:
         comments: Sequence of comments to add to the ontology itself.
     """
     # TODO:
-    # Should `comments` be replaced with a dict `annotations` for annotating the
-    # ontology itself?  If so, we should import Dublin Core.
+    # Should `comments` be replaced with a dict `annotations` for annotating
+    # the ontology itself?  If so, we should import Dublin Core.
 
     def __init__(
             self,
@@ -101,34 +102,18 @@ class Generator:
 
         """
         for item in self.dic:
-            if "_definition.scope" in item and "_definition.id" in item:
-                self._add_category(item)
-            else:
-                self._add_data_value(item)
+            self._add_item(item)
 
         self._add_metadata()
         self.onto.sync_attributes()
         return self.onto
 
-    def _add_annotations(self, cls, item) -> None:
-        """Add annotations for dic item `item` to generated on ontology
-        class `cls`.
-
-        Parameters:
-            cls: Generated ontology class to wich the annotations should
-                 be added.
-            item: Dic item with annotation info.
-
-        """
-        for annotation_name, value in item.items():
-
-             # Add new annotation to generated ontology
-             if annotation_name not in self.ddl:
-                 raise MissingAnnotationError(annotation_name)
-
-             # Assign annotation
-             annot = getattr(cls, annotation_name)
-             annot.append(en(value))
+    def _add_item(self, item) -> None:
+        """Add dic block `item` to the generated ontology."""
+        if "_definition.scope" in item and "_definition.id" in item:
+            self._add_category(item)
+        else:
+            self._add_data_value(item)
 
     def _add_top(self, item) -> None:
         """Add the top class of the generated ontology.
@@ -139,7 +124,7 @@ class Generator:
         """
         with self.onto:
             top = types.new_class(
-                item["_dictionary.title"], (self.ddl.DictionaryDefinedItem,)
+                item["_dictionary.title"], (self.ddl.DictionaryDefinedItem, )
             )
         self._add_annotations(top, item)
 
@@ -159,9 +144,6 @@ class Generator:
         else:
             name = item["_definition.id"]
             parent_name = item["_name.category_id"]
-
-            print(f"*** {name} -> {parent_name}")
-
             parent_item = self.dic[parent_name]
             if parent_item not in self.items:
                 self._add_category(parent_item)
@@ -182,16 +164,12 @@ class Generator:
         self.items.add(item)
 
         name = item["_definition.id"]
-        parents = []
 
+        parents = []
         parent_name1 = item["_name.category_id"]
         parent = self.dic[parent_name1]
         parent_name = parent['_definition.id']
-
-        if "_definition.scope" and "_definition.id" in parent:
-            self._add_category(parent)
-        else:
-            self._add_data_value(parent)
+        self._add_item(parent)
         parents.append(self.onto[parent_name])
 
         for ddl_name, value in item.items():
@@ -210,6 +188,26 @@ class Generator:
 
         self._add_annotations(cls, item)
 
+    def _add_annotations(self, cls, item) -> None:
+        """Add annotations for dic item `item` to generated on ontology
+        class `cls`.
+
+        Parameters:
+            cls: Generated ontology class to wich the annotations should
+                 be added.
+            item: Dic item with annotation info.
+
+        """
+        for annotation_name, value in item.items():
+
+            # Add new annotation to generated ontology
+            if annotation_name not in self.ddl:
+                raise MissingAnnotationError(annotation_name)
+
+            # Assign annotation
+            annot = getattr(cls, annotation_name)
+            annot.append(en(value))
+
     def _add_metadata(self):
         """Adds metadata to the generated ontology."""
         # TODO:
@@ -227,17 +225,20 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
     """Main function for ontology generation.
 
     Parameters:
-        dicfile: Absolute or relative path to the `.dic`-file to be converted to an ontology.
+        dicfile: Absolute or relative path to the `.dic`-file to be converted
+            to an ontology.
             This can be either a local path or a URL path.
-        ttlfile: Absolute or relative path to the Turtle (`.ttl`) file to be created from the
-            `dicfile`. The Turtle file contains the generated ontology in OWL. This **must** be a
-            local path.
+        ttlfile: Absolute or relative path to the Turtle (`.ttl`) file to
+            be created from the `dicfile`.
+            The Turtle file contains the generated ontology in OWL.
+            This **must** be a local path.
 
             !!! important
                 The file will be overwritten if it already exists.
 
     Returns:
-        The setup ontology generator class. This is mainly returned for debugging reasons.
+        The setup ontology generator class. This is mainly returned for
+        debugging reasons.
 
     """
     base_iri = "http://emmo.info/CIF-ontology/ontology/cif_core#"
