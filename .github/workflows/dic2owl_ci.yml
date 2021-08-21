@@ -32,8 +32,8 @@ jobs:
 
       - name: Run safety
         run: |
-          safety check -r dic2owl/requirements.txt --bare
-          safety check -r dic2owl/requirements_dev.txt --bare
+          DEPENDENCIES=$( python .github/static/get_dic2owl_deps.py dic2owl/requirements.txt dic2owl/requirements_dev.txt )
+          pip freeze | grep -E "${DEPENDENCIES}" | safety check --stdin
 
       - name: Lint with MyPy
         run: mypy --ignore-missing-imports --scripts-are-modules dic2owl/dic2owl
