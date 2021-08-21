@@ -10,14 +10,14 @@ from pathlib import Path
 
 # import textwrap
 import types
-from typing import Union, Sequence
+from typing import Any, Set, Union, Sequence
 import urllib.request
 
 from CifFile import CifDic
 
 # Remove the print statement concerning 'owlready2_optimized'
 # when importing owlready2 (which is imported also in emmo).
-with open(DEVNULL, "w") as handle:
+with open(DEVNULL, "w") as handle:  # pylint: disable=unspecified-encoding
     with redirect_stderr(handle):
         from emmo import World
         from emmo.ontology import Ontology
@@ -38,7 +38,7 @@ repository"""
 ONTOLOGY_DIR = Path(__file__).resolve().parent.parent.parent.joinpath("ontology")
 
 
-def en(string: str) -> locstr:
+def lang_en(string: str) -> locstr:
     """Converted to an English-localized string.
 
     Parameters:
@@ -55,6 +55,7 @@ class MissingAnnotationError(Exception):
     """Raised when using a cif-dictionary annotation not defined in ddl"""
 
 
+# pylint: disable=too-few-public-methods
 class Generator:
     """Class for generating CIF ontology from a CIF dictionary.
 
@@ -92,7 +93,7 @@ class Generator:
         # dcterms = self.world.get_ontology('http://purl.org/dc/terms/').load()
         # self.onto.imported_ontologies.append(dcterms)
 
-        self.items = set()
+        self.items: Set[dict] = set()
 
     def generate(self) -> Ontology:
         """Generate ontology for the CIF dictionary.
@@ -128,7 +129,7 @@ class Generator:
             )
         self._add_annotations(top, item)
 
-    def _add_category(self, item) -> None:
+    def _add_category(self, item: dict) -> None:
         """Add category.
 
         Parameters:
@@ -188,7 +189,7 @@ class Generator:
 
         self._add_annotations(cls, item)
 
-    def _add_annotations(self, cls, item: dict) -> None:
+    def _add_annotations(self, cls: Any, item: dict) -> None:
         """Add annotations for dic item `item` to generated ontology
         class `cls`.
 
@@ -206,7 +207,7 @@ class Generator:
 
             # Assign annotation
             annot = getattr(cls, annotation_name)
-            annot.append(en(value))
+            annot.append(lang_en(value))
 
     def _add_metadata(self) -> None:
         """Adds metadata to the generated ontology."""
@@ -265,8 +266,9 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
 if __name__ == "__main__":
     # main()
 
-    # for debugging and testing...
-    self = gen = main("cif_core.dic", "cif_core.ttl")
-    dic = self.dic
-    ddl = self.ddl
-    onto = self.onto
+    # # for debugging and testing...
+    # self = gen = main("cif_core.dic", "cif_core.ttl")
+    # dic = self.dic
+    # ddl = self.ddl
+    # onto = self.onto
+    pass

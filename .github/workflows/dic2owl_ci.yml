@@ -28,7 +28,7 @@ jobs:
         run: bandit -r dic2owl/dic2owl
 
       - name: Run PyLint
-        run: pylint dic2owl/dic2owl
+        run: pylint --rcfile=dic2owl/setup.cfg dic2owl/dic2owl
 
       - name: Run safety
         run: |
