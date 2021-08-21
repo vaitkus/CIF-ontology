@@ -249,7 +249,8 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
     for dic in ("ddl.dic", "templ_attr.cif", "templ_enum.cif", dicfile):
         if not Path(dic).resolve().exists():
             print("downloading", dic)
-            urllib.request.urlretrieve(baseurl + dic, dic)
+            # Since `baseurl` is used, the retrieved URL will never be a `file://` or similar.
+            urllib.request.urlretrieve(baseurl + dic, dic)  # nosec
 
     gen = Generator(dicfile=dicfile, base_iri=base_iri)
     onto = gen.generate()
