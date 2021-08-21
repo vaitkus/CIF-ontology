@@ -1,3 +1,9 @@
+"""
+# Install `dic2owl`
+
+Run `pip install -e .` when in the folder of this file.
+If in the root of the repository run instead `pip install -e ./dic2owl`.
+"""
 from pathlib import Path
 import re
 
@@ -33,9 +39,9 @@ with open(PACKAGE_DIR / "dic2owl/__init__.py", "r") as handle:
             raise RuntimeError(
                 f"Could not determine {info} from {PACKAGE_DIR / 'dic2owl/__init__.py'} !"
             )
-    VERSION = VERSION.group("version")
-    AUTHOR = AUTHOR.group("author")
-    AUTHOR_EMAIL = AUTHOR_EMAIL.group("email")
+    VERSION = VERSION.group("version")  # type: ignore
+    AUTHOR = AUTHOR.group("author")  # type: ignore
+    AUTHOR_EMAIL = AUTHOR_EMAIL.group("email")  # type: ignore
 
 with open(PACKAGE_DIR / "requirements.txt", "r") as handle:
     BASE = [

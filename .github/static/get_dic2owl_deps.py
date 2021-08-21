@@ -9,7 +9,7 @@ import re
 from typing import Set
 
 
-def main(argv: list = None) -> Set[str]:
+def main(argv_input: list = None) -> Set[str]:
     """Retrieve dependencies"""
     parser = argparse.ArgumentParser(
         description=main.__doc__,
@@ -22,7 +22,7 @@ def main(argv: list = None) -> Set[str]:
         nargs="+",
         help="The path(s) to one or several requirements.txt-style file(s).",
     )
-    args = parser.parse_args(argv)
+    args = parser.parse_args(argv_input)
 
     requirements_regex = re.compile(r"^(?P<name>[A-Za-z0-9_-]+)(~=|>=|==).*\n$")
     dependencies = set()
@@ -43,6 +43,6 @@ def main(argv: list = None) -> Set[str]:
 if __name__ == "__main__":
     from sys import argv
 
-    dependencies = main(argv[1:])
-    grep_extended_regex = f"({'|'.join(dependencies)})"
+    parsed_dependencies = main(argv[1:])
+    grep_extended_regex = f"({'|'.join(parsed_dependencies)})"
     print(grep_extended_regex)
