@@ -1,6 +1,9 @@
 name: CI - dic2owl
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'dic2owl/**'
 
 jobs:
 
