@@ -188,13 +188,13 @@ class Generator:
 
         self._add_annotations(cls, item)
 
-    def _add_annotations(self, cls, item) -> None:
-        """Add annotations for dic item `item` to generated on ontology
+    def _add_annotations(self, cls, item: dict) -> None:
+        """Add annotations for dic item `item` to generated ontology
         class `cls`.
 
         Parameters:
-            cls: Generated ontology class to wich the annotations should
-                 be added.
+            cls: Generated ontology class to which the annotations should
+                be added.
             item: Dic item with annotation info.
 
         """
@@ -208,7 +208,7 @@ class Generator:
             annot = getattr(cls, annotation_name)
             annot.append(en(value))
 
-    def _add_metadata(self):
+    def _add_metadata(self) -> None:
         """Adds metadata to the generated ontology."""
         # TODO:
         # Is there a way to extract metadata from the dic object like
