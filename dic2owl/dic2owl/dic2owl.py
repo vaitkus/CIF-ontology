@@ -28,14 +28,14 @@ with open(DEVNULL, "w") as handle:
 # Workaround for flaw in EMMO-Python
 # To be removed when EMMO-Python doesn't requires ontologies to import SKOS
 import emmo.ontology  # noqa: E402
+
 emmo.ontology.DEFAULT_LABEL_ANNOTATIONS = [
     "http://www.w3.org/2000/01/rdf-schema#label",
 ]
 
 """The absolute, normalized path to the `ontology` directory in this
 repository"""
-ONTOLOGY_DIR = Path(__file__).resolve().parent.parent.parent.joinpath(
-    "ontology")
+ONTOLOGY_DIR = Path(__file__).resolve().parent.parent.parent.joinpath("ontology")
 
 
 def en(string: str) -> locstr:
@@ -52,8 +52,7 @@ def en(string: str) -> locstr:
 
 
 class MissingAnnotationError(Exception):
-    """Raised when using a cif-dictionary annotation not defined in ddl
-    """
+    """Raised when using a cif-dictionary annotation not defined in ddl"""
 
 
 class Generator:
@@ -64,15 +63,16 @@ class Generator:
         base_iri: Base IRI of the generated ontology.
         comments: Sequence of comments to add to the ontology itself.
     """
+
     # TODO:
     # Should `comments` be replaced with a dict `annotations` for annotating
     # the ontology itself?  If so, we should import Dublin Core.
 
     def __init__(
-            self,
-            dicfile: str,
-            base_iri: str,
-            comments: Sequence[str] = (),
+        self,
+        dicfile: str,
+        base_iri: str,
+        comments: Sequence[str] = (),
     ) -> None:
         self.dicfile = dicfile
         self.dic = CifDic(dicfile, do_dREL=False)
@@ -89,8 +89,8 @@ class Generator:
         self.onto.imported_ontologies.append(self.ddl)
 
         # Load Dublin core for metadata and append it to imported ontologies
-        #dcterms = self.world.get_ontology('http://purl.org/dc/terms/').load()
-        #self.onto.imported_ontologies.append(dcterms)
+        # dcterms = self.world.get_ontology('http://purl.org/dc/terms/').load()
+        # self.onto.imported_ontologies.append(dcterms)
 
         self.items = set()
 
@@ -124,7 +124,7 @@ class Generator:
         """
         with self.onto:
             top = types.new_class(
-                item["_dictionary.title"], (self.ddl.DictionaryDefinedItem, )
+                item["_dictionary.title"], (self.ddl.DictionaryDefinedItem,)
             )
         self._add_annotations(top, item)
 
@@ -168,16 +168,16 @@ class Generator:
         parents = []
         parent_name1 = item["_name.category_id"]
         parent = self.dic[parent_name1]
-        parent_name = parent['_definition.id']
+        parent_name = parent["_definition.id"]
         self._add_item(parent)
         parents.append(self.onto[parent_name])
 
         for ddl_name, value in item.items():
-            if ddl_name.startswith('_type.'):
-                if ddl_name == '_type.dimension':
+            if ddl_name.startswith("_type."):
+                if ddl_name == "_type.dimension":
                     # TODO - fix special case
                     pass
-                elif value == 'Implied':
+                elif value == "Implied":
                     # TODO - fix special case
                     pass
                 else:
@@ -213,12 +213,11 @@ class Generator:
         # TODO:
         # Is there a way to extract metadata from the dic object like
         # _dictionary_audit.version?
-        #onto.set_version(version="XXX")
+        # onto.set_version(version="XXX")
 
         for comment in self.comments:
             self.onto.metadata.comment.append(comment)
-        self.onto.metadata.comment.append(
-            f'Generated with dic2owl from {self.dicfile}')
+        self.onto.metadata.comment.append(f"Generated with dic2owl from {self.dicfile}")
 
 
 def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
