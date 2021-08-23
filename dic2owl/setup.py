@@ -3,6 +3,10 @@
 
 Run `pip install -e .` when in the folder of this file.
 If in the root of the repository run instead `pip install -e ./dic2owl`.
+
+Together with the `dic2owl` package, the CLI tool with the same name will be
+installed.
+To find out more, run `dic2owl --help` after a successful installation.
 """
 from pathlib import Path
 import re

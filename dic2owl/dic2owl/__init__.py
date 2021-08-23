@@ -11,5 +11,9 @@ terminal.
 """
 
 __version__ = "0.1.0"
-__author__ = "Jesper Friis"
-__author_email__ = "jesper.friis(at)sintef.no"
+__author__ = (
+    "Jesper Friis <jesper.friis@sintef.no>, "
+    "Casper Welzel Andersen <casper.w.andersen@sintef.no>, "
+    "Francesca Lønstad Bleken <francesca.l.bleken@sintef.no>"
+)
+__author_email__ = "cif@emmo-repo.eu"
