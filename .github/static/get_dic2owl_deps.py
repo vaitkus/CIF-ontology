@@ -24,7 +24,9 @@ def main(argv_input: list = None) -> Set[str]:
     )
     args = parser.parse_args(argv_input)
 
-    requirements_regex = re.compile(r"^(?P<name>[A-Za-z0-9_-]+)(~=|>=|==).*\n$")
+    requirements_regex = re.compile(
+        r"^(?P<name>[A-Za-z0-9_-]+)(~=|>=|==).*\n$"
+    )
     dependencies = set()
     for file in args.requirements_files:
         if not file.exists():
@@ -34,7 +36,10 @@ def main(argv_input: list = None) -> Set[str]:
                 match = requirements_regex.fullmatch(line)
                 if match is None:
                     raise ValueError(
-                        f"Couldn't determine package name from line:\n\n  {line}"
+                        (
+                            "Couldn't determine package name from line:\n\n  "
+                            f"{line}"
+                        )
                     )
                 dependencies.add(match.group("name"))
     return dependencies

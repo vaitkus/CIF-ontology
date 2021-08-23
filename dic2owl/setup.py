@@ -37,7 +37,10 @@ with open(PACKAGE_DIR / "dic2owl/__init__.py", "r") as handle:
     }.items():
         if value is None:
             raise RuntimeError(
-                f"Could not determine {info} from {PACKAGE_DIR / 'dic2owl/__init__.py'} !"
+                (
+                    f"Could not determine {info} from "
+                    f"{PACKAGE_DIR / 'dic2owl/__init__.py'} !"
+                )
             )
     VERSION = VERSION.group("version")  # type: ignore
     AUTHOR = AUTHOR.group("author")  # type: ignore

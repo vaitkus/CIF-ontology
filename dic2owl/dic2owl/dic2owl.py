@@ -35,7 +35,9 @@ emmo.ontology.DEFAULT_LABEL_ANNOTATIONS = [
 
 """The absolute, normalized path to the `ontology` directory in this
 repository"""
-ONTOLOGY_DIR = Path(__file__).resolve().parent.parent.parent.joinpath("ontology")
+ONTOLOGY_DIR = (
+    Path(__file__).resolve().parent.parent.parent.joinpath("ontology")
+)
 
 
 def lang_en(string: str) -> locstr:
@@ -218,7 +220,9 @@ class Generator:
 
         for comment in self.comments:
             self.onto.metadata.comment.append(comment)
-        self.onto.metadata.comment.append(f"Generated with dic2owl from {self.dicfile}")
+        self.onto.metadata.comment.append(
+            f"Generated with dic2owl from {self.dicfile}"
+        )
 
 
 def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
@@ -250,7 +254,8 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
     for dic in ("ddl.dic", "templ_attr.cif", "templ_enum.cif", dicfile):
         if not Path(dic).resolve().exists():
             print("downloading", dic)
-            # Since `baseurl` is used, the retrieved URL will never be a `file://` or similar.
+            # Since `baseurl` is used, the retrieved URL will never be a
+            # `file://` or similar.
             urllib.request.urlretrieve(baseurl + dic, dic)  # nosec
 
     gen = Generator(dicfile=dicfile, base_iri=base_iri)
