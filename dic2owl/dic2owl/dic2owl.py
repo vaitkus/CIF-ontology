@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 # Generate ontology
 
@@ -266,14 +265,3 @@ def main(dicfile: Union[str, Path], ttlfile: Union[str, Path]) -> Generator:
     )
 
     return gen  # XXX - just for debugging
-
-
-if __name__ == "__main__":
-    # main()
-
-    # # for debugging and testing...
-    # self = gen = main("cif_core.dic", "cif_core.ttl")
-    # dic = self.dic
-    # ddl = self.ddl
-    # onto = self.onto
-    pass
